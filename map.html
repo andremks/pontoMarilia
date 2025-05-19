@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Rota com Animação</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+    }
+    #map {
+      height: 100vh;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.min.js"></script>
+
+  <script>
+    const map = L.map('map').setView([-23.5505, -46.6333], 12);
+
+    // Estilo Bright do MapTiler com sua API key
+    L.tileLayer('https://api.maptiler.com/maps/bright/{z}/{x}/{y}.png?key=MFntHq36rn7Keykd3Ch3', {
+      attribution: '&copy; <a href="https://www.maptiler.com/">MapTiler</a> &copy; OpenStreetMap contributors',
+      tileSize: 512,
+      zoomOffset: -1,
+      maxZoom: 20
+    }).addTo(map);
+
+    const waypoints = [
+      L.latLng(-23.5505, -46.6333), // Centro
+      L.latLng(-23.5671, -46.6488), // Pinheiros
+      L.latLng(-23.5882, -46.6325), // Vila Mariana
+      L.latLng(-23.6035, -46.6859), // Morumbi
+      L.latLng(-23.5315, -46.7917), // Pirituba
+      L.latLng(-23.4805, -46.5766)  // Penha
+    ];
+
+    const stopIcon = L.icon({
+      iconUrl: 'https://img.icons8.com/ios-filled/50/google-maps-new.png',
+      iconSize: [32, 32],
+      iconAnchor: [16, 32]
+    });
+
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    waypoints.forEach((point, i) => {
+      const letter = letters[i];
+      L.marker(point, { icon: stopIcon })
+        .addTo(map)
+        .bindPopup(`Ponto ${letter}`);
+    });
+
+    let routeCoords = [];
+    let moveInterval = null;
+
+    const control = L.Routing.control({
+      waypoints: waypoints,
+      lineOptions: {
+        styles: [{ color: 'blue', weight: 5 }]
+      },
+      createMarker: () => null,
+      routeWhileDragging: false,
+      addWaypoints: false,
+    }).addTo(map);
+
+    control.on('routesfound', function(e) {
+      const route = e.routes[0];
+      const coordinates = route.coordinates;
+      routeCoords = coordinates.map(pt => [pt.lat, pt.lng]);
+
+      const marker = L.marker(routeCoords[0], {
+        icon: L.icon({
+          iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png',
+          iconSize: [32, 32],
+          iconAnchor: [16, 16]
+        })
+      }).addTo(map);
+
+      const pauseIndices = waypoints.map(parada => {
+        return routeCoords.findIndex(coord =>
+          Math.abs(coord[0] - parada.lat) < 0.0005 &&
+          Math.abs(coord[1] - parada.lng) < 0.0001
+        );
+      }).filter(i => i >= 0);
+
+      const pauseTime = 3000;
+      const duration = 12 * 60 * 1000;
+
+      const startTimes = [
+        [17, 52],
+        [18, 4],
+        [18, 16]
+      ].map(([hour, minute]) => {
+        const time = new Date();
+        time.setHours(hour, minute, 0, 0);
+        return time;
+      });
+
+      function startAnimation(startTime) {
+        if (moveInterval) {
+          clearInterval(moveInterval);
+          moveInterval = null;
+        }
+
+        const now = new Date();
+        const timeElapsed = now - startTime;
+
+        if (timeElapsed < 0 || timeElapsed > duration + (pauseTime * pauseIndices.length)) {
+          return;
+        }
+
+        let index = Math.floor((timeElapsed / duration) * routeCoords.length);
+        if (index >= routeCoords.length) index = routeCoords.length - 1;
+
+        marker.setLatLng(routeCoords[index]);
+
+        const interval = duration / routeCoords.length;
+        moveInterval = setInterval(() => {
+          if (index >= routeCoords.length) {
+            clearInterval(moveInterval);
+            return;
+          }
+
+          const current = routeCoords[index];
+          const previous = marker.getLatLng();
+
+          if (previous.lat !== current[0] || previous.lng !== current[1]) {
+            marker.setLatLng(current);
+          }
+
+          if (pauseIndices.includes(index)) {
+            clearInterval(moveInterval);
+            setTimeout(() => {
+              index++;
+              startAnimation(startTime);
+            }, pauseTime);
+          } else {
+            index++;
+          }
+        }, interval);
+      }
+
+      setInterval(() => {
+        const now = new Date();
+        startTimes.forEach(startTime => {
+          const endTime = new Date(startTime.getTime() + duration + (pauseTime * pauseIndices.length));
+          if (now >= startTime && now <= endTime) {
+            startAnimation(startTime);
+          }
+        });
+      }, 5000);
+    });
+  </script>
+</body>
+</html>
