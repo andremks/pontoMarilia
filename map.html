@@ -12,13 +12,35 @@
       margin: 0;
       padding: 0;
     }
+    body {
+      font-family: sans-serif;
+    }
     #map {
       height: 100vh;
+      z-index: 0;
+    }
+    #toggleBtn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 1000;
+      background-color: white;
+      padding: 10px 15px;
+      border: 1px solid #ccc;
+      cursor: pointer;
+    }
+    .leaflet-routing-container {
+      transition: transform 0.3s ease-in-out;
+      transform: translateX(100%);
+    }
+    .show-directions .leaflet-routing-container {
+      transform: translateX(0);
     }
   </style>
 </head>
-<body>
+<body class="">
   <div id="map"></div>
+  <button id="toggleBtn">Mostrar/Ocultar Trajeto</button>
 
   <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.min.js"></script>
@@ -63,7 +85,7 @@
     const control = L.Routing.control({
       waypoints: waypoints,
       lineOptions: {
-        styles: [{ color: 'blue', weight: 5 }]
+        styles: [{ color: 'blue', weight: 3 }]
       },
       createMarker: () => null,
       routeWhileDragging: false,
@@ -91,12 +113,13 @@
       }).filter(i => i >= 0);
 
       const pauseTime = 3000;
-      const duration = 12 * 60 * 1000;
+      const duration = 10 * 60 * 1000;
 
       const startTimes = [
-        [17, 52],
-        [18, 4],
-        [18, 16]
+        [18, 10],
+        [18, 20],
+        [18, 30],
+        [18, 40],
       ].map(([hour, minute]) => {
         const time = new Date();
         time.setHours(hour, minute, 0, 0);
@@ -156,6 +179,10 @@
           }
         });
       }, 5000);
+    });
+
+    document.getElementById('toggleBtn').addEventListener('click', () => {
+      document.body.classList.toggle('show-directions');
     });
   </script>
 </body>
