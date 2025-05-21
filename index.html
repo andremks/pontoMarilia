@@ -57,27 +57,28 @@
     }).addTo(map);
 
     const waypoints = [
-      L.latLng(-23.5505, -46.6333), // Centro
-      L.latLng(-23.5671, -46.6488), // Pinheiros
-      L.latLng(-23.5882, -46.6325), // Vila Mariana
-      L.latLng(-23.6035, -46.6859), // Morumbi
-      L.latLng(-23.5315, -46.7917), // Pirituba
-      L.latLng(-23.4805, -46.5766)  // Penha
+      L.latLng(-22.216291, -49.946438), // Centro
+      L.latLng(-22.218441, -49.944274), // Pinheiros
+      L.latLng(-22.220189, -49.941291), // Vila Mariana
+      L.latLng(-22.223437, -49.936388), // Morumbi
+      L.latLng(-22.223437, -49.936388), // Pirituba
+      L.latLng(-22.234974, -49.928975),  // Penha
+      L.latLng(-22.240148, -49.933728)  // Penha
     ];
 
     const stopIcon = L.icon({
-      iconUrl: 'https://img.icons8.com/ios-filled/50/google-maps-new.png',
-      iconSize: [32, 32],
+      iconUrl: 'img/ponto.png',
+      iconSize: [18, 18],
       iconAnchor: [16, 32]
     });
 
-    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    waypoints.forEach((point, i) => {
-      const letter = letters[i];
-      L.marker(point, { icon: stopIcon })
-        .addTo(map)
-        .bindPopup(`Ponto ${letter}`);
-    });
+    const marker = L.marker(routeCoords[0], {
+        icon: L.icon({
+          iconUrl: 'img/onibus.png',
+          iconSize: [42, 42],
+          iconAnchor: [16, 16]
+        })
+      }).addTo(map);
 
     let routeCoords = [];
     let moveInterval = null;
