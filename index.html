@@ -259,6 +259,50 @@
       alert("Seu navegador não suporta geolocalização.");
     }
 
+
+
+
+
+
+
+
+
+
+
+    if ("geolocation" in navigator) {
+  navigator.geolocation.getCurrentPosition(
+    position => {
+      // Usuário permitiu e a localização está disponível
+      onUserLocationUpdate(position);
+
+      // Começa a rastrear a localização continuamente
+      navigator.geolocation.watchPosition(onUserLocationUpdate, onLocationError, {
+        enableHighAccuracy: true,
+        maximumAge: 1000,
+        timeout: 10000
+      });
+    },
+    error => {
+      if (error.code === error.PERMISSION_DENIED) {
+        alert("Para uma melhor experiência, ative a localização do seu dispositivo e permita o acesso.");
+      } else if (error.code === error.POSITION_UNAVAILABLE) {
+        alert("Localização indisponível. Verifique se o GPS está ativado.");
+      } else if (error.code === error.TIMEOUT) {
+        alert("Não foi possível obter sua localização no tempo esperado.");
+      } else {
+        alert("Erro ao obter localização: " + error.message);
+      }
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 5000
+    }
+  );
+} else {
+  alert("Seu navegador não suporta geolocalização.");
+}
+
+
   </script>
 </body>
 
