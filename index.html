@@ -89,6 +89,23 @@
     let routeCoords = [];
     let moveInterval = null;
 
+    function isFeriadoHoje() {
+      const hoje = new Date().toISOString().split('T')[0];
+      const feriadosMarilia = [
+        '2025-01-01', // Confraternização Universal
+        '2025-03-25', // Aniversário de Marília
+        '2025-04-18', // Sexta-feira Santa
+        '2025-05-01', // Dia do Trabalho
+        '2025-06-19', // Corpus Christi
+        '2025-09-07', // Independência
+        '2025-10-12', // N. Sra. Aparecida
+        '2025-11-02', // Finados
+        '2025-11-15', // Proclamação República
+        '2025-12-25'  // Natal
+      ];
+      return feriadosMarilia.includes(hoje);
+    }
+
     const control = L.Routing.control({
       waypoints: waypoints,
       lineOptions: {
@@ -123,18 +140,14 @@
       const duration = 30 * 60 * 1000;
 
       const hoje = new Date();
-      const diaSemana = hoje.getDay(); // 0 = Domingo, 6 = Sábado
+      const diaSemana = hoje.getDay(); // 0 = Domingo
+      const feriadoHoje = isFeriadoHoje();
 
       let startTimes;
-      if (diaSemana >= 1 && diaSemana <= 5) {
+
+      if (feriadoHoje || diaSemana === 0) {
         startTimes = [
-          [9, 0], [9, 30], [10, 0], [10, 30],
-          [11, 0], [11, 30], [12, 0], [12, 30],
-          [13, 0], [13, 30], [14, 0], [14, 30],
-          [15, 0], [15, 30], [16, 0], [16, 30],
-          [17, 0], [17, 30], [18, 0], [18, 30],
-          [19, 0], [19, 30], [20, 0], [20, 30],
-          [21, 0], [21, 30], [22, 0], [22, 30]
+          [9, 30], [12, 0], [15, 30], [18, 0]
         ];
       } else if (diaSemana === 6) {
         startTimes = [
@@ -143,7 +156,13 @@
         ];
       } else {
         startTimes = [
-          [9, 30], [12, 0], [15, 30], [18, 0]
+          [9, 0], [9, 30], [10, 0], [10, 30],
+          [11, 0], [11, 30], [12, 0], [12, 30],
+          [13, 0], [13, 30], [14, 0], [14, 30],
+          [15, 0], [15, 30], [16, 0], [16, 30],
+          [17, 0], [17, 30], [18, 0], [18, 30],
+          [19, 0], [19, 30], [20, 0], [20, 30],
+          [21, 0], [21, 30], [22, 0], [22, 30]
         ];
       }
 
@@ -212,7 +231,7 @@
       document.body.classList.toggle('show-directions');
     });
 
-    // GEOLOCALIZAÇÃO EM TEMPO REAL
+    // GEOLOCALIZAÇÃO
     let userMarker = null;
     let watchId = null;
     let retryInterval = null;
@@ -274,7 +293,6 @@
 
     function startWatchPosition() {
       if (watchId !== null) return;
-
       watchId = navigator.geolocation.watchPosition(
         onUserLocationUpdate,
         onLocationError,
