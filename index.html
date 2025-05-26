@@ -1,28 +1,15 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-
 <head>
   <meta charset="utf-8" />
   <title>Rota com Animação</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css" />
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: sans-serif;
-    }
-
-    #map {
-      height: 100vh;
-      z-index: 0;
-    }
-
+    * { margin: 0; padding: 0; }
+    body { font-family: sans-serif; }
+    #map { height: 100vh; z-index: 0; }
     #toggleBtn {
       position: absolute;
       top: 10px;
@@ -33,28 +20,22 @@
       border: 1px solid #ccc;
       cursor: pointer;
     }
-
     .leaflet-routing-container {
       transition: transform 0.3s ease-in-out;
       transform: translateX(100%);
     }
-
     .show-directions .leaflet-routing-container {
       transform: translateX(0);
     }
   </style>
 </head>
-
 <body class="">
   <div id="map"></div>
   <button id="toggleBtn">Mostrar/Ocultar Trajeto</button>
-
   <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.min.js"></script>
-
   <script>
     const map = L.map('map').setView([-22.215807, -49.946942], 12);
-
     L.tileLayer('https://api.maptiler.com/maps/bright/{z}/{x}/{y}.png?key=MFntHq36rn7Keykd3Ch3', {
       attribution: '&copy; <a href="https://www.maptiler.com/">MapTiler</a> &copy; OpenStreetMap contributors',
       tileSize: 512,
@@ -63,157 +44,73 @@
     }).addTo(map);
 
     const waypoints = [
-      L.latLng(-22.216291, -49.946438),
-      L.latLng(-22.218441, -49.944274),
-      L.latLng(-22.220189, -49.941291),
-      L.latLng(-22.221080, -49.941291),
-      L.latLng(-22.223437, -49.936388),
-      L.latLng(-22.223437, -49.936388),
-      L.latLng(-22.234974, -49.928975),
+      L.latLng(-22.216291, -49.946438), L.latLng(-22.218441, -49.944274),
+      L.latLng(-22.220189, -49.941291), L.latLng(-22.221080, -49.941291),
+      L.latLng(-22.223437, -49.936388), L.latLng(-22.234974, -49.928975),
       L.latLng(-22.240148, -49.933728)
     ];
-
-    const stopIcon = L.icon({
-      iconUrl: 'img/ponto2.svg',
-      iconSize: [24, 24],
-      iconAnchor: [16, 32]
-    });
-
+    const stopIcon = L.icon({ iconUrl: 'img/ponto2.svg', iconSize: [24, 24], iconAnchor: [16, 32] });
     const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     waypoints.forEach((point, i) => {
       const letter = letters[i];
-      L.marker(point, { icon: stopIcon })
-        .addTo(map)
-        .bindPopup(`Ponto ${letter}`);
+      L.marker(point, { icon: stopIcon }).addTo(map).bindPopup(`Ponto ${letter}`);
     });
 
-    let routeCoords = [];
-    let moveInterval = null;
-
+    let routeCoords = [], moveInterval = null;
     function isFeriadoHoje() {
       const hoje = new Date().toISOString().split('T')[0];
-      const feriadosMarilia = [
-        '2025-01-01', // Confraternização Universal
-        '2025-03-25', // Aniversário de Marília
-        '2025-04-18', // Sexta-feira Santa
-        '2025-05-01', // Dia do Trabalho
-        '2025-06-19', // Corpus Christi
-        '2025-09-07', // Independência
-        '2025-10-12', // N. Sra. Aparecida
-        '2025-11-02', // Finados
-        '2025-11-15', // Proclamação República
-        '2025-12-25'  // Natal
-      ];
-      return feriadosMarilia.includes(hoje);
+      const feriados = ['2025-01-01','2025-03-25','2025-04-18','2025-05-01','2025-06-19','2025-09-07','2025-10-12','2025-11-02','2025-11-15','2025-12-25'];
+      return feriados.includes(hoje);
     }
 
     const control = L.Routing.control({
       waypoints: waypoints,
-      lineOptions: {
-        styles: [{ color: 'blue', weight: 4 }]
-      },
+      lineOptions: { styles: [{ color: 'blue', weight: 4 }] },
       createMarker: () => null,
       routeWhileDragging: false,
       addWaypoints: false,
     }).addTo(map);
 
     control.on('routesfound', function (e) {
-      const route = e.routes[0];
-      const coordinates = route.coordinates;
+      const coordinates = e.routes[0].coordinates;
       routeCoords = coordinates.map(pt => [pt.lat, pt.lng]);
 
       const marker = L.marker(routeCoords[0], {
-        icon: L.icon({
-          iconUrl: 'img/onibus.svg',
-          iconSize: [42, 42],
-          iconAnchor: [22, 42]
-        })
-      }).addTo(map);
+        icon: L.icon({ iconUrl: 'img/onibus.svg', iconSize: [42, 42], iconAnchor: [22, 42] })
+      }).addTo(map).bindPopup("Ônibus");
 
-      const pauseIndices = waypoints.map(parada => {
-        return routeCoords.findIndex(coord =>
-          Math.abs(coord[0] - parada.lat) < 0.0005 &&
-          Math.abs(coord[1] - parada.lng) < 0.0001
-        );
-      }).filter(i => i >= 0);
-
+      const pauseIndices = waypoints.map(p => routeCoords.findIndex(c => Math.abs(c[0] - p.lat) < 0.0005 && Math.abs(c[1] - p.lng) < 0.0001)).filter(i => i >= 0);
       const pauseTime = 3000;
       const duration = 30 * 60 * 1000;
 
-      const hoje = new Date();
-      const diaSemana = hoje.getDay(); // 0 = Domingo
-      const feriadoHoje = isFeriadoHoje();
-
       let startTimes;
-
-      if (feriadoHoje || diaSemana === 0) {
-        startTimes = [
-          [9, 30], [12, 0], [15, 30], [18, 0]
-        ];
-      } else if (diaSemana === 6) {
-        startTimes = [
-          [10, 0], [11, 0], [12, 0], [13, 0],
-          [14, 0], [15, 0], [16, 0], [17, 0], [18, 0]
-        ];
+      const d = new Date(), dia = d.getDay(), feriado = isFeriadoHoje();
+      if (feriado || dia === 0) {
+        startTimes = [[9,30],[12,0],[15,30],[18,0]];
+      } else if (dia === 6) {
+        startTimes = [[10,0],[11,0],[12,0],[13,0],[14,0],[15,0],[16,0],[17,0],[18,0]];
       } else {
-        startTimes = [
-          [9, 0], [9, 30], [10, 0], [10, 30],
-          [11, 0], [11, 30], [12, 0], [12, 30],
-          [13, 0], [13, 30], [14, 0], [14, 30],
-          [15, 0], [15, 30], [16, 0], [16, 30],
-          [17, 0], [17, 30], [18, 0], [18, 30],
-          [19, 0], [19, 30], [20, 0], [20, 30],
-          [21, 0], [21, 30], [22, 0], [22, 30]
-        ];
+        startTimes = [[9,0],[9,30],[10,0],[10,30],[11,0],[11,30],[12,0],[12,30],[13,0],[13,30],[14,0],[14,30],[15,0],[15,30],[16,0],[16,30],[17,0],[17,30],[18,0],[18,30],[19,0],[19,30],[20,0],[20,30],[21,0],[21,30],[22,0],[22,30]];
       }
 
-      startTimes = startTimes.map(([hour, minute]) => {
-        const time = new Date();
-        time.setHours(hour, minute, 0, 0);
-        return time;
-      });
+      startTimes = startTimes.map(([h, m]) => { const t = new Date(); t.setHours(h, m, 0, 0); return t; });
 
       function startAnimation(startTime) {
-        if (moveInterval) {
-          clearInterval(moveInterval);
-          moveInterval = null;
-        }
-
+        if (moveInterval) clearInterval(moveInterval);
         const now = new Date();
-        const timeElapsed = now - startTime;
-
-        if (timeElapsed < 0 || timeElapsed > duration + (pauseTime * pauseIndices.length)) {
-          return;
-        }
-
-        let index = Math.floor((timeElapsed / duration) * routeCoords.length);
-        if (index >= routeCoords.length) index = routeCoords.length - 1;
-
+        let index = Math.floor(((now - startTime) / duration) * routeCoords.length);
+        if (index < 0 || index >= routeCoords.length) return;
         marker.setLatLng(routeCoords[index]);
-
         const interval = duration / routeCoords.length;
         moveInterval = setInterval(() => {
-          if (index >= routeCoords.length) {
-            clearInterval(moveInterval);
-            return;
-          }
-
+          if (index >= routeCoords.length) return clearInterval(moveInterval);
           const current = routeCoords[index];
           const previous = marker.getLatLng();
-
-          if (previous.lat !== current[0] || previous.lng !== current[1]) {
-            marker.setLatLng(current);
-          }
-
+          if (previous.lat !== current[0] || previous.lng !== current[1]) marker.setLatLng(current);
           if (pauseIndices.includes(index)) {
             clearInterval(moveInterval);
-            setTimeout(() => {
-              index++;
-              startAnimation(startTime);
-            }, pauseTime);
-          } else {
-            index++;
-          }
+            setTimeout(() => { index++; startAnimation(startTime); }, pauseTime);
+          } else index++;
         }, interval);
       }
 
@@ -221,9 +118,7 @@
         const now = new Date();
         startTimes.forEach(startTime => {
           const endTime = new Date(startTime.getTime() + duration + (pauseTime * pauseIndices.length));
-          if (now >= startTime && now <= endTime) {
-            startAnimation(startTime);
-          }
+          if (now >= startTime && now <= endTime) startAnimation(startTime);
         });
       }, 5000);
     });
@@ -232,27 +127,20 @@
       document.body.classList.toggle('show-directions');
     });
 
-    // GEOLOCALIZAÇÃO
-    let userMarker = null;
-    let watchId = null;
-    let retryInterval = null;
+    // GEOLOCALIZAÇÃO: apenas no mobile, máximo 2 tentativas
+    let userMarker = null, watchId = null, retryInterval = null, geoRetryCount = 0;
+
+    function isMobileDevice() {
+      return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    }
 
     function onUserLocationUpdate(position) {
       const lat = position.coords.latitude;
       const lng = position.coords.longitude;
-
       if (!userMarker) {
         userMarker = L.marker([lat, lng], {
-          icon: L.icon({
-            iconUrl: 'img/figure.svg',
-            iconSize: [34, 41],
-            iconAnchor: [25, 41],
-            popupAnchor: [1, -34],
-            shadowUrl: 'https://unpkg.com/leaflet@1.9.3/dist/images/marker-shadow.png',
-            shadowSize: [54, 36]
-          })
+          icon: L.icon({ iconUrl: 'img/figure.svg', iconSize: [34, 41], iconAnchor: [25, 41], popupAnchor: [1, -34], shadowUrl: 'https://unpkg.com/leaflet@1.9.3/dist/images/marker-shadow.png', shadowSize: [54, 36] })
         }).addTo(map).bindPopup("Você está aqui").openPopup();
-
         map.setView([lat, lng], 15);
       } else {
         userMarker.setLatLng([lat, lng]);
@@ -261,9 +149,10 @@
 
     function onLocationError(error) {
       if (error.code === error.PERMISSION_DENIED) {
-        console.warn("Usuário negou permissão. Verificando novamente em 4 segundos...");
-        if (!retryInterval) {
-          retryInterval = setInterval(tryStartGeolocation, 4000);
+        if (isMobileDevice() && geoRetryCount < 2) {
+          geoRetryCount++;
+          console.warn("Usuário negou permissão. Verificando novamente em 4 segundos...");
+          if (!retryInterval) retryInterval = setInterval(tryStartGeolocation, 4000);
         }
       } else if (error.code === error.POSITION_UNAVAILABLE) {
         alert("Localização indisponível. Verifique o GPS.");
@@ -276,41 +165,29 @@
 
     function tryStartGeolocation() {
       navigator.geolocation.getCurrentPosition(
-        position => {
+        pos => {
           clearInterval(retryInterval);
           retryInterval = null;
-          onUserLocationUpdate(position);
+          onUserLocationUpdate(pos);
           startWatchPosition();
         },
-        error => {
-          onLocationError(error);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 5000
-        }
+        onLocationError,
+        { enableHighAccuracy: true, timeout: 5000 }
       );
     }
 
     function startWatchPosition() {
       if (watchId !== null) return;
-      watchId = navigator.geolocation.watchPosition(
-        onUserLocationUpdate,
-        onLocationError,
-        {
-          enableHighAccuracy: true,
-          maximumAge: 1000,
-          timeout: 10000
-        }
-      );
+      watchId = navigator.geolocation.watchPosition(onUserLocationUpdate, onLocationError, {
+        enableHighAccuracy: true,
+        maximumAge: 1000,
+        timeout: 10000
+      });
     }
 
-    if ("geolocation" in navigator) {
+    if ("geolocation" in navigator && isMobileDevice()) {
       tryStartGeolocation();
-    } else {
-      alert("Seu navegador não suporta geolocalização.");
     }
   </script>
 </body>
-
 </html>
